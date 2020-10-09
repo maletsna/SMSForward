@@ -14,7 +14,7 @@ public class ConfigActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_config);
-        String itemName = getIntent().getStringExtra("ruleName");
+        String itemName = getIntent().getStringExtra(getString(R.string.extraRuleName));
         if (itemName != null && !itemName.isEmpty()) {
             for (Rule rule : MainActivity.rules) {
                 if (rule.getName().equals(itemName)) {
@@ -45,16 +45,23 @@ public class ConfigActivity extends AppCompatActivity {
         TextView ruleName = findViewById(R.id.ruleName);
         CheckBox forwardAll = findViewById(R.id.forwardAllCB);
         if (from.getText().toString().isEmpty() && !forwardAll.isChecked()) {
-            from.setError("Please specify sender number");
+            from.setError(getString(R.string.errNoSender));
         }
         if (to.getText().toString().isEmpty()) {
-            to.setError("Please specify recipient number");
+            to.setError(getString(R.string.errNoRecipient));
         }
         if (ruleName.getText().toString().isEmpty()) {
-            ruleName.setError("Please specify rule name");
+            ruleName.setError(getString(R.string.errNoRuleName));
+        } else if (getIntent().getStringExtra(getString(R.string.extraRuleName)) == null) {
+            for (Rule rule : MainActivity.rules) {
+                if (rule.getName().equals(ruleName.getText().toString())) {
+                    ruleName.setError(getString(R.string.errNonUniqueName));
+                    break;
+                }
+            }
         }
         if (from.getError() == null && to.getError() == null && ruleName.getError() == null) {
-            String itemName = getIntent().getStringExtra("ruleName");
+            String itemName = getIntent().getStringExtra(getString(R.string.extraRuleName));
             if (itemName == null) {
                 MainActivity.rules.add(new Rule(forwardAll.isChecked(), from.getText().toString(), to.getText().toString(), ruleName.getText().toString()));
             } else {
@@ -68,7 +75,7 @@ public class ConfigActivity extends AppCompatActivity {
                     }
                 }
             }
-
+            JsonManager.saveRules(MainActivity.rules, getApplicationContext());
             Intent intent = new Intent(ConfigActivity.this, MainActivity.class);
             startActivity(intent);
         }

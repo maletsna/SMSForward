@@ -17,13 +17,17 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;
     private static final int MY_PERMISSIONS_REQUEST_RECEIVE_SMS = 1;
-    public static List<Rule> rules = new ArrayList<>();
+    public static List<Rule> rules;
     private List<String> mobileArray = new ArrayList<>();
     private ArrayAdapter<String> adapter;
 
@@ -33,6 +37,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        try {
+            rules = JsonManager.loadRules(getApplicationContext());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if (rules != null && !rules.isEmpty()) {
+            for (Rule rule : rules) {
+                mobileArray.add(rule.getName());
+            }
+        }
+
         adapter = new ArrayAdapter<>(this,
                 R.layout.activity_listview, mobileArray);
 
@@ -44,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
                 //           smsSendMessage(view);
                 //            Snackbar.make(view, "SMS sent", Snackbar.LENGTH_LONG)
                 //                   .setAction("Action", null).show();
-                Intent intent = new Intent(MainActivity.this, ConfigActivity.class).putExtra("ruleName", adapter.getItem(position));
+                Intent intent = new Intent(MainActivity.this, ConfigActivity.class).putExtra(getString(R.string.extraRuleName), adapter.getItem(position));
                 startActivity(intent);
             }
         });
