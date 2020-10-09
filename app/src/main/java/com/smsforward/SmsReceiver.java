@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 
 public class SmsReceiver extends BroadcastReceiver {
@@ -27,7 +28,14 @@ public class SmsReceiver extends BroadcastReceiver {
                 }
                 String sender = messages[0].getOriginatingAddress();
                 String message = sb.toString();
-                System.out.println(message + sender);
+                SmsManager smsManager = SmsManager.getDefault();
+
+                for (Rule rule : MainActivity.rules) {
+                    if (rule.isForwardAll() || rule.getFrom().equals(sender)) {
+                        smsManager.sendTextMessage(rule.getTo(), null, message,
+                                null, null);
+                    }
+                }
             }
         }
     }

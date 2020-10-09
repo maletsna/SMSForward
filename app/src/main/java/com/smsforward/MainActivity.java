@@ -1,15 +1,16 @@
 package com.smsforward;
 
 import android.Manifest;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.telephony.SmsManager;
+import android.view.ContextMenu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -28,9 +29,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;
     private static final int MY_PERMISSIONS_REQUEST_RECEIVE_SMS = 1;
     public static List<Rule> rules;
-    private List<String> mobileArray = new ArrayList<>();
+    private List<String> ruleArray = new ArrayList<>();
     private ArrayAdapter<String> adapter;
-
+    private String selectedItem;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,25 +48,22 @@ public class MainActivity extends AppCompatActivity {
         }
         if (rules != null && !rules.isEmpty()) {
             for (Rule rule : rules) {
-                mobileArray.add(rule.getName());
+                ruleArray.add(rule.getName());
             }
         }
 
-        adapter = new ArrayAdapter<>(this,
-                R.layout.activity_listview, mobileArray);
+        adapter = new ArrayAdapter<>(this, R.layout.activity_listview, ruleArray);
 
         ListView listView = findViewById(R.id.listview);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //           smsSendMessage(view);
-                //            Snackbar.make(view, "SMS sent", Snackbar.LENGTH_LONG)
-                //                   .setAction("Action", null).show();
                 Intent intent = new Intent(MainActivity.this, ConfigActivity.class).putExtra(getString(R.string.extraRuleName), adapter.getItem(position));
                 startActivity(intent);
             }
         });
+        registerForContextMenu(listView);
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,21 +88,39 @@ public class MainActivity extends AppCompatActivity {
                     MY_PERMISSIONS_REQUEST_RECEIVE_SMS);
         }
     }
-    public void smsSendMessage(View view) {
-        PendingIntent sentIntent = null, deliveryIntent = null;
-        SmsManager smsManager = SmsManager.getDefault();
-        smsManager.sendTextMessage
-                ("", null, "",
-                        sentIntent, deliveryIntent);
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mobileArray.clear();
-        for (Rule rule: rules) {
-            mobileArray.add(rule.getName());
+        ruleArray.clear();
+        for (Rule rule : rules) {
+            ruleArray.add(rule.getName());
         }
         adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        ListView lv = (ListView) v;
+        AdapterView.AdapterContextMenuInfo acmi = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        selectedItem = (String) lv.getItemAtPosition(acmi.position);
+        menu.add(0, v.getId(), 0, "Delete rule");
+
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        for (Rule rule : rules) {
+            if (rule.getName().equals(selectedItem)) {
+                rules.remove(rule);
+                ruleArray.remove(rule.getName());
+                adapter.notifyDataSetChanged();
+                JsonManager.saveRules(rules, getApplicationContext());
+                break;
+            }
+        }
+        Toast.makeText(this, "Rule deleted", Toast.LENGTH_SHORT).show();
+        return true;
     }
 }
