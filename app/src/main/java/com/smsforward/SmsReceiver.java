@@ -28,12 +28,14 @@ public class SmsReceiver extends BroadcastReceiver {
                 }
                 String sender = messages[0].getOriginatingAddress();
                 String message = sb.toString();
+                LogActivity.logSms(sender, null, message, null, false, context);
                 SmsManager smsManager = SmsManager.getDefault();
 
                 for (Rule rule : MainActivity.rules) {
                     if (rule.isForwardAll() || rule.getFrom().equals(sender)) {
                         smsManager.sendTextMessage(rule.getTo(), null, message,
                                 null, null);
+                        LogActivity.logSms(null, rule.getTo(), message, rule.getName(), true, context);
                     }
                 }
             }
