@@ -3,6 +3,7 @@ package com.smsforward;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;
     private static final int MY_PERMISSIONS_REQUEST_RECEIVE_SMS = 1;
+    private static final int MY_PERMISSIONS_REQUEST_BOOT_COMPLETED = 1;
     public static List<Rule> rules;
     private List<String> ruleArray = new ArrayList<>();
     private ArrayAdapter<String> adapter;
@@ -53,7 +55,12 @@ public class MainActivity extends AppCompatActivity {
                 ruleArray.add(rule.getName());
             }
         }
-
+        Intent intent = new Intent(getApplicationContext(), SMSService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getApplicationContext().startForegroundService(intent);
+        } else {
+            getApplicationContext().startService(intent);
+        }
         adapter = new ArrayAdapter<>(this, R.layout.activity_listview, ruleArray);
 
         ListView listView = findViewById(R.id.listview);
@@ -75,8 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        Toolbar tb = findViewById(R.id.toolbar2);
-        tb.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 Intent intent = new Intent(MainActivity.this, LogActivity.class);
@@ -97,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.RECEIVE_SMS},
                     MY_PERMISSIONS_REQUEST_RECEIVE_SMS);
+        }
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.RECEIVE_BOOT_COMPLETED) !=
+                PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECEIVE_BOOT_COMPLETED},
+                    MY_PERMISSIONS_REQUEST_BOOT_COMPLETED);
         }
     }
 
